@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image-to-Image Prompt Rewriter – AI Order</title>
+  <style>
+    :root {
+      --bg: #0f0f13;
+      --card: #1a1a24;
+      --border: #2a2a3a;
+      --text: #e8e8f0;
+      --muted: #8888a0;
+      --accent: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --success: #22c55e;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      line-height: 1.5;
+    }
+    .container {
+      width: 100%;
+      max-width: 720px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 36px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .header { text-align: center; margin-bottom: 28px; }
+    .icon { font-size: 34px; margin-bottom: 10px; }
+    h1 { font-size: 23px; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { color: var(--muted); font-size: 14px; }
+    .badge {
+      display: inline-block;
+      background: rgba(139, 92, 246, 0.2);
+      color: #c4b5fd;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 8px;
+    }
+    .field { margin-bottom: 18px; }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+    textarea {
+      width: 100%;
+      background: #12121a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 15px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 95px;
+    }
+    textarea:focus { outline: none; border-color: var(--accent); }
+    textarea::placeholder { color: #55556a; }
+    select {
+      width: 100%;
+      background: #12121a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 15px;
+      color: var(--text);
+      font-size: 15px;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238888a0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 15px center;
+    }
+    select:focus { outline: none; border-color: var(--accent); }
+    .btn {
+      display: block;
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .output-section { margin-top: 26px; display: none; }
+    .output-section.visible { display: block; }
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 9px;
+    }
+    .output-title { font-size: 14px; font-weight: 600; }
+    .status {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .output-box {
+      background: #12121a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 14px;
+      white-space: pre-wrap;
+      max-height: 440px;
+      overflow-y: auto;
+      color: #d0d0e0;
+      line-height: 1.55;
+    }
+    .actions { display: flex; gap: 11px; margin-top: 12px; }
+    .action-btn {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 11px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .action-btn:hover { background: #222230; }
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #22c55e;
+      color: white;
+      padding: 11px 22px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 50;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .thinking {
+      display: none;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      margin: 14px 0;
+    }
+    .thinking.visible { display: block; }
+    .tips {
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .tips strong { color: var(--text); }
+    .tips ol { margin: 8px 0 0 18px; }
+    .tips li { margin-bottom: 5px; }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+    .check-row input { width: 17px; height: 17px; accent-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="icon">✨🪄</div>
+      <h1>Image-to-Image Prompt Rewriter</h1>
+      <p class="subtitle">Offline • Rewrites every time you click</p>
+      <div class="badge">Correct Order + Anti-Smoothing</div>
+    </div>
+
+    <div class="field">
+      <label>✏️ Your original prompt</label>
+      <textarea id="originalPrompt" placeholder="e.g. close-up of a woman with glasses looking slightly to the side"></textarea>
+    </div>
+
+    <div class="field">
+      <label>🖼️ What to keep from the source image (optional)</label>
+      <textarea id="sourceDesc" placeholder="e.g. same face, same glasses, natural skin, soft window light, brick background"></textarea>
+    </div>
+
+    <div class="field">
+      <label>📷 Camera lens</label>
+      <select id="cameraLens">
+        <option value="35mm">35mm</option>
+        <option value="50mm">50mm</option>
+        <option value="85mm" selected>85mm (best for portraits)</option>
+        <option value="105mm">105mm</option>
+        <option value="135mm">135mm</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>📐 Sensor</label>
+      <select id="sensorSize">
+        <option value="full-frame" selected>Full-frame</option>
+        <option value="APS-C">APS-C</option>
+        <option value="Micro Four Thirds">Micro Four Thirds</option>
+        <option value="medium format">Medium format</option>
+      </select>
+    </div>
+
+    <div class="check-row">
+      <input type="checkbox" id="maxDetail" checked>
+      <label for="maxDetail" style="margin:0;font-weight:500;">Kill AI smoothing / wax look</label>
+    </div>
+
+    <button class="btn" id="rewriteBtn" onclick="rewritePrompt()">✨ Rewrite Prompt</button>
+
+    <div class="thinking" id="thinking">Rewriting in correct order…</div>
+
+    <div class="output-section" id="outputSection">
+      <div class="output-header">
+        <div class="output-title">✨ Rewritten Prompt</div>
+        <span class="status" id="statusBadge">Ready</span>
+      </div>
+      <div class="output-box" id="outputBox"></div>
+      <div class="actions">
+        <button class="action-btn" onclick="copyToClipboard()">📋 Copy</button>
+        <button class="action-btn" onclick="resetForm()">↺ Clear</button>
+      </div>
+    </div>
+
+    <div class="tips">
+      <strong>How this version works</strong>
+      <ol>
+        <li>Every click rebuilds the prompt from scratch using your current inputs.</li>
+        <li>It always places elements in the best order for realistic results.</li>
+        <li>Anti-smoothing language is added automatically when the checkbox is on.</li>
+        <li>Use img2img strength around 0.35–0.55 for best fidelity.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Copied!</div>
+
+  <script>
+    // ---------- Helpers ----------
+    function clean(str) {
+      return (str || '').replace(/\s+/g, ' ').replace(/[“”]/g, '"').replace(/[‘’]/g, "'").trim();
+    }
+    function has(text, words) {
+      const t = text.toLowerCase();
+      return words.some(w => t.includes(w));
+    }
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+    function uniq(arr) {
+      return [...new Set(arr.filter(Boolean))];
+    }
+
+    // ---------- Core rewrite logic ----------
+    function rewritePrompt() {
+      const original = clean(document.getElementById('originalPrompt').value);
+      const source   = clean(document.getElementById('sourceDesc').value);
+      const lens     = document.getElementById('cameraLens').value;
+      const sensor   = document.getElementById('sensorSize').value;
+      const maxDetail = document.getElementById('maxDetail').checked;
+
+      if (!original) {
+        showToast('Please enter a prompt first');
+        return;
+      }
+
+      const btn = document.getElementById('rewriteBtn');
+      const thinking = document.getElementById('thinking');
+      btn.disabled = true;
+      thinking.classList.add('visible');
+      document.getElementById('outputSection').classList.remove('visible');
+
+      // Small delay so it feels like real processing
+      setTimeout(() => {
+        const final = buildPrompt(original, source, lens, sensor, maxDetail);
+
+        document.getElementById('outputBox').textContent = final;
+        document.getElementById('outputSection').classList.add('visible');
+        document.getElementById('statusBadge').textContent = maxDetail ? 'Ultra Realistic' : 'Rewritten';
+        thinking.classList.remove('visible');
+        btn.disabled = false;
+        document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 280 + Math.random() * 320);
+    }
+
+    function buildPrompt(original, source, lens, sensor, maxDetail) {
+      // ============================================
+      // CORRECT ORDER FOR BEST REALISTIC RESULTS
+      // 1. Identity / preservation
+      // 2. Core subject description
+      // 3. Physical details (skin, hair, glasses…)
+      // 4. Lighting
+      // 5. Camera + technical
+      // 6. Quality + anti-smoothing
+      // 7. Atmosphere / final anchors
+      // ============================================
+
+      const parts = [];
+
+      // 1. IDENTITY & PRESERVATION (most important for img2img)
+      const identity = [];
+      identity.push(pick([
+        'identical face and facial structure',
+        'same face, same expression, same eye color',
+        'preserving exact facial features and micro-expression',
+        'same person, identical face and gaze'
+      ]));
+      identity.push(pick([
+        'same head angle and pose',
+        'identical posture and camera angle',
+        'preserving the exact pose and framing'
+      ]));
+      if (has(source + original, ['glasses', 'spectacles'])) {
+        identity.push('identical glasses and frames');
+      }
+      if (has(source + original, ['hair', 'hairstyle'])) {
+        identity.push('same hairstyle, hair color and length');
+      }
+      if (source) {
+        identity.push(`keeping: ${source}`);
+      }
+      parts.push(identity.join(', '));
+
+      // 2. CORE SUBJECT (cleaned original)
+      let core = original
+        .replace(/\b(very|really|quite|just|some|nice|good|beautiful|amazing|stunning|gorgeous)\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+      parts.push(core);
+
+      // 3. PHYSICAL DETAIL LAYER (only when maxDetail is on)
+      if (maxDetail) {
+        const physical = [];
+        physical.push('natural skin texture with visible pores');
+        physical.push('realistic skin imperfections and fine texture');
+        physical.push('individual hair strands clearly visible');
+        if (has(source + original, ['glasses', 'spectacles', 'eyewear'])) {
+          physical.push('accurate reflections and refraction in the glasses lenses');
+        }
+        physical.push('natural catchlights in the eyes');
+        parts.push(physical.join(', '));
+      }
+
+      // 4. LIGHTING
+      let lighting = 'soft natural side lighting, gentle highlights on hair and skin, soft realistic shadows';
+      const allText = (original + ' ' + source).toLowerCase();
+      if (has(allText, ['window', 'daylight', 'natural light', 'soft light'])) {
+        lighting = 'soft natural window light, gentle side lighting, realistic light falloff on skin';
+      } else if (has(allText, ['golden hour', 'sunset', 'sunrise', 'warm'])) {
+        lighting = 'golden hour warm side light with natural rim light';
+      } else if (has(allText, ['studio', 'softbox'])) {
+        lighting = 'soft professional studio lighting';
+      } else if (has(allText, ['dramatic', 'rim', 'backlit'])) {
+        lighting = 'dramatic natural lighting with rim light';
+      }
+      parts.push(lighting);
+
+      // 5. CAMERA + TECHNICAL
+      let camera = `shot on ${lens} lens on ${sensor} sensor`;
+      if (lens === '85mm' || lens === '105mm') {
+        camera += ', shallow depth of field';
+      }
+      parts.push(camera);
+
+      // 6. QUALITY + ANTI-SMOOTHING (the anti-wax layer)
+      const quality = [];
+      if (maxDetail) {
+        quality.push(
+          'no plastic skin',
+          'no wax skin',
+          'no airbrushed skin',
+          'no over-smoothed skin',
+          'no beauty filter',
+          'unretouched natural skin',
+          'true-to-life skin detail',
+          'subsurface scattering on skin'
+        );
+      }
+      quality.push(
+        'photorealistic',
+        'sharp focus on the eyes and face',
+        'highly detailed',
+        'raw photo quality',
+        'professional portrait photography'
+      );
+      parts.push(uniq(quality).join(', '));
+
+      // 7. FINAL REALISM ANCHORS
+      if (maxDetail) {
+        parts.push(pick([
+          'true-to-life photographic detail',
+          'as realistic as a high-resolution scan',
+          'natural unretouched photograph'
+        ]));
+      }
+
+      // Clean up final string
+      let final = parts
+        .join(', ')
+        .replace(/, ,/g, ',')
+        .replace(/\s+,/g, ',')
+        .replace(/,\s*$/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+
+      return final.charAt(0).toUpperCase() + final.slice(1);
+    }
+
+    // ---------- UI helpers ----------
+    function copyToClipboard() {
+      const text = document.getElementById('outputBox').textContent;
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!'))
+        .catch(() => {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast('Copied to clipboard!');
+        });
+    }
+
+    function resetForm() {
+      document.getElementById('originalPrompt').value = '';
+      document.getElementById('sourceDesc').value = '';
+      document.getElementById('cameraLens').value = '85mm';
+      document.getElementById('sensorSize').value = 'full-frame';
+      document.getElementById('maxDetail').checked = true;
+      document.getElementById('outputSection').classList.remove('visible');
+      document.getElementById('outputBox').textContent = '';
+      document.getElementById('thinking').classList.remove('visible');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    // Keyboard shortcut
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') rewritePrompt();
+    });
+  </script>
+</body>
+</html>
